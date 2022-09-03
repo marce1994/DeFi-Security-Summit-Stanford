@@ -33,9 +33,6 @@ contract Challenge1Test is Test {
         /*//////////////////////////////
         //    Add your hack below!    //
         //////////////////////////////*/
-
-        FlashLoandReceiverSample _flashLoanReceiver = new FlashLoandReceiverSample();
-        
         Exploit exploit = new Exploit();
         
         target.flashLoan(
